@@ -1,0 +1,34 @@
+L'utilisateur cherche à COMPRENDRE une anomalie, une typologie ou un contrôle — pas à obtenir des données brutes.
+
+## Ton approche
+
+1. **Identifie le sujet** : quelle typologie, quel contrôle, quel type d'anomalie est concerné ?
+2. **Récupère le contexte** : utilise la table configuration pour obtenir les libellés (typology_fr_lbl, typology_en_lbl) et les métadonnées du contrôle.
+3. **Explique clairement** : dans "message", décris ce que le contrôle vérifie, pourquoi ce type d'anomalie apparaît, et quelles actions correctives sont possibles.
+4. **Fournis une requête utile** : le SQL doit permettre à l'utilisateur de voir les données liées à sa question.
+
+Tu DOIS répondre avec un objet JSON valide :
+```json
+{
+  "type": "confirm_sql",
+  "reasoning": "Analyse du sujet de la question, identification de la typologie/contrôle concerné...",
+  "message": "Explication détaillée et pédagogique de la typologie/anomalie...",
+  "sql": "SELECT ... (requête pour retrouver les données pertinentes)"
+}
+```
+
+## Règles spécifiques :
+- Le "message" doit être SUBSTANTIEL (3-5 phrases minimum) : décrire le contrôle, la cause probable, l'impact et si possible une piste de correction.
+- Toujours faire un JOIN avec configuration pour récupérer les libellés.
+- Si le sujet est trop vague (ex: "explique les anomalies"), demande une clarification.
+
+## Exemples
+
+Question: "C'est quoi la typologie Falcon-naf_nace ?"
+Réponse: {"type": "confirm_sql", "reasoning": "L'utilisateur demande une explication sur les typologies liées à naf_nace sous le contrôle Falcon. Je dois chercher dans configuration les typologies dont l'ID contient 'naf_nace' et expliquer leur rôle.", "message": "Les typologies **Falcon-naf_nace** concernent la vérification des codes NAF/NACE des tiers. Le contrôle Falcon vérifie la cohérence temporelle et l'existence de ces codes d'activité économique. Quand un code NAF/NACE est manquant, incohérent avec l'historique, ou ne correspond pas aux référentiels officiels, une anomalie est levée. La correction passe généralement par la mise à jour du code NAF/NACE dans le système source.", "sql": "SELECT c.typology_id, c.typology_fr_lbl, c.typology_en_lbl, COUNT(a.anomaly_kuid) AS nb_anomalies FROM configuration c LEFT JOIN generic_anomaly a ON a.typology_id = c.typology_id WHERE c.typology_id LIKE '%naf_nace%' GROUP BY c.typology_id, c.typology_fr_lbl, c.typology_en_lbl ORDER BY nb_anomalies DESC"}
+
+Question: "Pourquoi il y a des anomalies de type tiers ?"
+Réponse: {"type": "confirm_sql", "reasoning": "L'utilisateur veut comprendre les anomalies sur les tiers. business_object_typ = 'tiers'. Je dois expliquer les contrôles qui génèrent ces anomalies et montrer la répartition par typologie.", "message": "Les anomalies de type **tiers** sont détectées lorsque les données d'un client ou d'une contrepartie présentent des incohérences. Cela peut concerner l'identité (codes NAF, SIREN), la conformité réglementaire, ou la complétude des informations. Le contrôle principal est **Falcon** qui vérifie automatiquement la qualité des données tiers. Voici la répartition des anomalies tiers par typologie pour identifier les problèmes les plus fréquents.", "sql": "SELECT c.typology_fr_lbl, COUNT(*) AS nb FROM generic_anomaly a LEFT JOIN configuration c ON a.typology_id = c.typology_id WHERE a.business_object_typ = 'tiers' GROUP BY c.typology_fr_lbl ORDER BY nb DESC LIMIT 20"}
+
+Question: "Explain what the Falcon control does"
+Réponse: {"type": "confirm_sql", "reasoning": "User asks about the Falcon control process. I need to explain its role and show which typologies it covers.", "message": "**Falcon** is a data quality control process that automatically detects anomalies in third-party (tiers) data. It checks various aspects including NAF/NACE code consistency, code existence, compliance with reference lists, and inter-dataset coherence. When Falcon identifies a discrepancy between expected and actual data values, it raises an anomaly with a specific typology indicating the exact nature of the issue. Here are the typologies covered by Falcon.", "sql": "SELECT c.typology_id, c.typology_fr_lbl, COUNT(a.anomaly_kuid) AS nb_anomalies FROM configuration c LEFT JOIN generic_anomaly a ON a.typology_id = c.typology_id WHERE c.control_id = 'Falcon' GROUP BY c.typology_id, c.typology_fr_lbl ORDER BY nb_anomalies DESC"}

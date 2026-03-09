@@ -1,0 +1,142 @@
+[
+  {
+    "id": 1,
+    "question": "Combien d'anomalies au total ?",
+    "expected_sql_pattern": "SELECT\\s+COUNT\\(\\*\\).*FROM\\s+generic_anomaly",
+    "expected_type": "confirm_sql",
+    "tags": ["count", "basic"]
+  },
+  {
+    "id": 2,
+    "question": "Anomalies par type d'objet métier",
+    "expected_sql_pattern": "business_object_typ.*GROUP\\s+BY",
+    "expected_type": "confirm_sql",
+    "tags": ["group_by", "basic"]
+  },
+  {
+    "id": 3,
+    "question": "Quelles typologies ont le plus d'anomalies ?",
+    "expected_sql_pattern": "JOIN.*configuration.*GROUP\\s+BY",
+    "expected_type": "confirm_sql",
+    "tags": ["join", "group_by"]
+  },
+  {
+    "id": 4,
+    "question": "Anomalies détectées en janvier 2024",
+    "expected_sql_pattern": "2024-01",
+    "expected_type": "confirm_sql",
+    "tags": ["date_filter"]
+  },
+  {
+    "id": 5,
+    "question": "Top 5 des contrôles détectant le plus d'anomalies",
+    "expected_sql_pattern": "control_id.*GROUP\\s+BY.*ORDER\\s+BY.*DESC.*LIMIT\\s+5",
+    "expected_type": "confirm_sql",
+    "tags": ["top_n", "group_by"]
+  },
+  {
+    "id": 6,
+    "question": "Anomalies avec hotfix actif",
+    "expected_sql_pattern": "hotfix_flg\\s*=\\s*1",
+    "expected_type": "confirm_sql",
+    "tags": ["filter", "hotfix"]
+  },
+  {
+    "id": 7,
+    "question": "Anomalies trimestrielles",
+    "expected_sql_pattern": "frequency_typ\\s*=\\s*'Q'",
+    "expected_type": "confirm_sql",
+    "tags": ["filter", "frequency"]
+  },
+  {
+    "id": 8,
+    "question": "Anomalies tiers détectées par Falcon en 2024",
+    "expected_sql_pattern": "business_object_typ.*tiers.*control_id.*Falcon",
+    "expected_type": "confirm_sql",
+    "tags": ["multi_filter", "date_filter"]
+  },
+  {
+    "id": 9,
+    "question": "Anomalies disparues",
+    "expected_sql_pattern": "source_event_typ.*DISAPPEARED",
+    "expected_type": "confirm_sql",
+    "tags": ["filter", "event"]
+  },
+  {
+    "id": 10,
+    "question": "Nombre d'anomalies par mois en 2024",
+    "expected_sql_pattern": "(strftime|substr).*2024.*GROUP\\s+BY",
+    "expected_type": "confirm_sql",
+    "tags": ["date", "group_by", "time_series"]
+  },
+  {
+    "id": 11,
+    "question": "Anomalies contenant le code ISIN FR0000120271",
+    "expected_sql_pattern": "object_identification_fields.*LIKE.*FR0000120271",
+    "expected_type": "confirm_sql",
+    "tags": ["json_search"]
+  },
+  {
+    "id": 12,
+    "question": "Combien d'anomalies par priorité ?",
+    "expected_sql_pattern": "priority_typ.*GROUP\\s+BY",
+    "expected_type": "confirm_sql",
+    "tags": ["group_by"]
+  },
+  {
+    "id": 13,
+    "question": "Quelles sont les applications source les plus fréquentes ?",
+    "expected_sql_pattern": "source_application_iua_cod.*GROUP\\s+BY",
+    "expected_type": "confirm_sql",
+    "tags": ["group_by"]
+  },
+  {
+    "id": 14,
+    "question": "Anomalies avec un hotfix expiré",
+    "expected_sql_pattern": "hotfix_expiration_asof_dat",
+    "expected_type": "confirm_sql",
+    "tags": ["filter", "date", "hotfix"]
+  },
+  {
+    "id": 15,
+    "question": "Nombre de typologies distinctes",
+    "expected_sql_pattern": "COUNT.*DISTINCT.*typology_id",
+    "expected_type": "confirm_sql",
+    "tags": ["count", "distinct"]
+  },
+  {
+    "id": 16,
+    "question": "Les 10 typologies avec le plus d'anomalies et leur libellé français",
+    "expected_sql_pattern": "JOIN.*configuration.*typology_fr_lbl.*LIMIT\\s+10",
+    "expected_type": "confirm_sql",
+    "tags": ["join", "top_n"]
+  },
+  {
+    "id": 17,
+    "question": "Évolution du nombre d'anomalies créées vs disparues",
+    "expected_sql_pattern": "source_event_typ.*(CREATED|DISAPPEARED)",
+    "expected_type": "confirm_sql",
+    "tags": ["comparison", "event"]
+  },
+  {
+    "id": 18,
+    "question": "Anomalies de type contrat avec correction manuelle",
+    "expected_sql_pattern": "business_object_typ.*contrat.*correction_mode_typ",
+    "expected_type": "confirm_sql",
+    "tags": ["multi_filter"]
+  },
+  {
+    "id": 19,
+    "question": "Quel est le nombre moyen d'anomalies par contrôle ?",
+    "expected_sql_pattern": "AVG|COUNT.*GROUP\\s+BY.*control_id",
+    "expected_type": "confirm_sql",
+    "tags": ["aggregation"]
+  },
+  {
+    "id": 20,
+    "question": "Montre-moi les dernières anomalies détectées",
+    "expected_sql_pattern": "ORDER\\s+BY.*(detection_time|asof_dat)\\s+DESC",
+    "expected_type": "confirm_sql",
+    "tags": ["order", "recent"]
+  }
+]

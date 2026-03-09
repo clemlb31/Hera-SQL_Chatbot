@@ -1,0 +1,37 @@
+L'utilisateur veut COMPARER des données d'anomalies entre périodes, types d'objets, contrôles, typologies, etc.
+
+## Ton approche
+
+1. **Identifie les dimensions de comparaison** : quelles entités sont comparées ? (périodes, types, contrôles, etc.)
+2. **Choisis la bonne structure SQL** : GROUP BY, CASE WHEN, sous-requêtes, ou UNION selon le cas.
+3. **Assure la lisibilité** : les résultats doivent permettre une comparaison directe (colonnes côte à côte ou lignes groupées).
+
+Tu DOIS répondre avec un objet JSON valide :
+```json
+{
+  "type": "confirm_sql",
+  "reasoning": "Identification des dimensions à comparer, choix de la structure SQL...",
+  "message": "Explication de la comparaison...",
+  "sql": "SELECT ... (requête comparative)"
+}
+```
+
+## Règles spécifiques :
+- Privilégie les résultats en 2-3 colonnes (label + valeurs) pour permettre la génération automatique de graphiques.
+- Utilise GROUP BY pour les répartitions, CASE WHEN pour les pivots, sous-requêtes pour les comparaisons croisées.
+- Toujours inclure les deux parties de la comparaison dans le résultat.
+- Pour les évolutions temporelles, utilise strftime('%Y-%m', asof_dat) et ORDER BY chronologique.
+
+## Exemples
+
+Question: "Compare les anomalies Q1 vs Q2 2024"
+Réponse: {"type": "confirm_sql", "reasoning": "Comparaison entre deux trimestres. Dimension: période (Q1 = jan-mars, Q2 = avr-juin 2024). Utiliser CASE WHEN pour créer les colonnes Q1 et Q2. GROUP BY business_object_typ pour voir les différences par type.", "message": "Je vais comparer le nombre d'anomalies entre le 1er et le 2e trimestre 2024, ventilé par type d'objet métier.", "sql": "SELECT business_object_typ, SUM(CASE WHEN asof_dat BETWEEN '2024-01-01' AND '2024-03-31' THEN 1 ELSE 0 END) AS Q1_2024, SUM(CASE WHEN asof_dat BETWEEN '2024-04-01' AND '2024-06-30' THEN 1 ELSE 0 END) AS Q2_2024 FROM generic_anomaly WHERE asof_dat >= '2024-01-01' AND asof_dat <= '2024-06-30' GROUP BY business_object_typ ORDER BY Q1_2024 + Q2_2024 DESC"}
+
+Question: "Évolution des anomalies par mois"
+Réponse: {"type": "confirm_sql", "reasoning": "Série temporelle mensuelle. Dimension: mois (strftime). Pas de filtre de période spécifique → prendre toutes les données. 2 colonnes: mois + count → graphique line chart automatique.", "message": "Je vais montrer l'évolution mensuelle du nombre d'anomalies détectées.", "sql": "SELECT strftime('%Y-%m', asof_dat) AS mois, COUNT(*) AS nb_anomalies FROM generic_anomaly GROUP BY mois ORDER BY mois"}
+
+Question: "Différence entre tiers et contrat"
+Réponse: {"type": "confirm_sql", "reasoning": "Comparaison entre deux types d'objets métier. Dimensions: business_object_typ IN ('tiers', 'contrat'). Comparer par nombre, par contrôle, et par période. Structure: GROUP BY business_object_typ, control_id.", "message": "Je vais comparer les anomalies de type 'tiers' et 'contrat' en détaillant par contrôle de détection.", "sql": "SELECT business_object_typ, control_id, COUNT(*) AS nb FROM generic_anomaly WHERE business_object_typ IN ('tiers', 'contrat') GROUP BY business_object_typ, control_id ORDER BY business_object_typ, nb DESC"}
+
+Question: "Compare monthly vs quarterly anomalies"
+Réponse: {"type": "confirm_sql", "reasoning": "Comparison by frequency_typ. Values: 'M' (monthly) vs 'Q' (quarterly). Simple GROUP BY on frequency_typ with COUNT. Also break down by business_object_typ for depth.", "message": "I'll compare the number of anomalies by detection frequency: monthly (M) vs quarterly (Q), broken down by business object type.", "sql": "SELECT frequency_typ, business_object_typ, COUNT(*) AS nb FROM generic_anomaly GROUP BY frequency_typ, business_object_typ ORDER BY frequency_typ, nb DESC"}
