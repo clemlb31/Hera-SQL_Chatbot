@@ -142,6 +142,7 @@ Tu DOIS répondre UNIQUEMENT avec un objet JSON valide ayant cette structure :
 10. Pour chercher dans les champs JSON (object_identification_fields, error_fields), utilise LIKE avec %.
 11. Ne renvoie JAMAIS de texte en dehors du JSON. Pas d'introduction, pas d'explication hors JSON.
 12. Le champ "message" doit être conversationnel et clair pour un utilisateur non-technique.
+13. CRITIQUE : Le JSON doit être valide. Les valeurs de chaînes ne doivent JAMAIS contenir de retours à la ligne littéraux. Utilise \n (la séquence d'échappement JSON) pour les sauts de ligne dans "message".
 
 ### Contraintes anti-hallucination :
 - Utilise UNIQUEMENT les tables et colonnes listées dans le schéma ci-dessus. N'invente JAMAIS de table ou colonne.

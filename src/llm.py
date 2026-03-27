@@ -42,6 +42,14 @@ def extract_thinking(raw_text: str) -> tuple[str | None, str]:
     return None, raw_text
 
 
+def _fix_json_string_newlines(text: str) -> str:
+    """Escape literal newlines inside JSON string values (Mistral often outputs these)."""
+    def fix_string(m: re.Match) -> str:
+        s = m.group(0)
+        return s.replace('\n', '\\n').replace('\r', '\\r')
+    return re.sub(r'"(?:[^"\\]|\\.)*"', fix_string, text, flags=re.DOTALL)
+
+
 def parse_llm_response(raw_text: str) -> dict:
     """Parse the LLM's JSON response, handling edge cases."""
     # Extract thinking block first
@@ -54,6 +62,9 @@ def parse_llm_response(raw_text: str) -> dict:
         lines = [l for l in lines if not l.strip().startswith("```")]
         text = "\n".join(lines).strip()
 
+    # Fix literal newlines inside JSON string values (common with Mistral)
+    text = _fix_json_string_newlines(text)
+
     try:
         parsed = json.loads(text)
     except json.JSONDecodeError:
@@ -63,9 +74,9 @@ def parse_llm_response(raw_text: str) -> dict:
             try:
                 parsed = json.loads(text[start:end])
             except json.JSONDecodeError:
-                return {"type": "error", "message": raw_text, "sql": None}
+                return {"type": "clarify", "message": raw_text, "sql": None}
         else:
-            return {"type": "error", "message": raw_text, "sql": None}
+            return {"type": "clarify", "message": raw_text, "sql": None}
 
     if "type" not in parsed:
         parsed["type"] = "error"
